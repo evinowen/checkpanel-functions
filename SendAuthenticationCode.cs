@@ -16,7 +16,7 @@ namespace checkpanel_functions
     public static class SendAuthenticationCode
     {
         [FunctionName("SendAuthenticationCode")]
-        public static void Run([QueueTrigger("send-authentication-code", Connection = "")] SendAuthenticationCodeModel item, ILogger log)
+        public static void Run([QueueTrigger("%SEND_AUTHENTICATION_CODE_QUEUE%", Connection = "")] SendAuthenticationCodeModel item, ILogger log)
         {
             log.LogInformation("SendAuthenticationCode Triggered");
 
