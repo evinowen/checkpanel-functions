@@ -20,7 +20,8 @@ namespace checkpanel_functions
             log.LogInformation("SendDailyReport Triggered");
             var sendgrid_sender = Environment.GetEnvironmentVariable("SENDGRID_SENDER");
 
-            log.LogInformation($"SendDailyReport Send daily report to ${model.EmailAddress}");
+            log.LogInformation($"SendDailyReport Send daily report from {sendgrid_sender}");
+            log.LogInformation($"SendDailyReport Send daily report to {model.EmailAddress}");
 
             message = new SendGridMessage();
             message.AddTo(model.EmailAddress);
