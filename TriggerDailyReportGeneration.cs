@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using checkpanel_functions.Helpers;
 
 namespace checkpanel_functions
 {
@@ -21,7 +22,7 @@ namespace checkpanel_functions
         {
             log.LogInformation("TriggerDailyReportGeneration Triggered");
 
-            var daily_report_endpoint = Environment.GetEnvironmentVariable("DAILY_REPORT_ENDPOINT");
+            var daily_report_endpoint = Environment.GetEnvironmentVariable("CHECKPANEL_REPORT_ENDPOINT");
             log.LogInformation($"TriggerDailyReportGeneration Call endpoint {daily_report_endpoint} to trigger event");
 
             var report = new Report
@@ -29,7 +30,7 @@ namespace checkpanel_functions
                 Name = "daily"
             };
 
-            HttpClient client = new HttpClient();
+            HttpClient client = ApiHttpClientFactory.MakeClient();
 
             HttpResponseMessage response = await client.PostAsJsonAsync(daily_report_endpoint, report);
 

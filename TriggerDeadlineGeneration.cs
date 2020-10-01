@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using checkpanel_functions.Helpers;
 
 namespace checkpanel_functions
 {
@@ -23,7 +24,7 @@ namespace checkpanel_functions
         {
             log.LogInformation("TriggerDeadlineGeneration Triggered");
 
-            var deadline_generation_endpoint = Environment.GetEnvironmentVariable("DEADLINE_GENERATION_ENDPOINT");
+            var deadline_generation_endpoint = Environment.GetEnvironmentVariable("CHECKPANEL_DEADLINE_GENERATION_ENDPOINT");
             log.LogInformation($"TriggerDeadlineGeneration Call endpoint {deadline_generation_endpoint} to trigger event");
 
             var deadline = new Deadline {
@@ -31,7 +32,7 @@ namespace checkpanel_functions
                 DueMinute = DateTime.Now.Minute
             };
 
-            HttpClient client = new HttpClient();
+            HttpClient client = ApiHttpClientFactory.MakeClient();
 
             HttpResponseMessage response = await client.PostAsJsonAsync(deadline_generation_endpoint, deadline);
 
