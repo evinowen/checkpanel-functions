@@ -4,8 +4,6 @@ using System.Net.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
 using checkpanel_functions.Helpers;
 
 namespace checkpanel_functions

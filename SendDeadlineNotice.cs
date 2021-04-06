@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
+using Azure;
+using Azure.Communication;
+using Azure.Communication.Sms;
 
 namespace checkpanel_functions
 {
@@ -21,33 +23,40 @@ namespace checkpanel_functions
         {
             log.LogInformation("SendDeadlineNotice Triggered");
 
-            var twilio_account_sid = Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID");
-            var twilio_auth_token = Environment.GetEnvironmentVariable("TWILIO_AUTH_TOKEN");
-            var twilio_sender = Environment.GetEnvironmentVariable("TWILIO_SENDER");
+            string sms_sender_telephone_number = Environment.GetEnvironmentVariable("SMS_SENDER_TELEPHONE_NUMBER");
+            string communication_services_connection_string = Environment.GetEnvironmentVariable("COMMUNICATION_SERVICES_CONNECTION_STRING");
 
-            log.LogInformation("SendDeadlineNotice Initialized Twilio Client");
-            TwilioClient.Init(twilio_account_sid, twilio_auth_token);
+            SmsClient smsClient = new SmsClient(communication_services_connection_string);
+            log.LogInformation("SendDeadlineNotice Initialized SMS Client");
 
-            log.LogInformation($"SendDeadlineNotice Send deadline notice to ${model.Telephone}");
+            log.LogInformation($"SendDeadlineNotice Send deadline notice from {sms_sender_telephone_number}");
+            log.LogInformation($"SendDeadlineNotice Send deadline notice to {model.Telephone}");
 
-            string body;
+            string message;
 
             if (model.Deadline > 0)
             {
-                body = $"checkpanel: Item \"{model.Summary}\" is due in {model.Deadline} minutes.";
+                message = $"checkpanel: Item \"{model.Summary}\" is due in {model.Deadline} minutes.";
             }
             else
             {
-                body = $"checkpanel: Item \"{model.Summary}\" has expired";
+                message = $"checkpanel: Item \"{model.Summary}\" has expired";
             }
 
-            MessageResource.Create(
-                body: body,
-                from: new Twilio.Types.PhoneNumber(twilio_sender),
-                to: new Twilio.Types.PhoneNumber(model.Telephone)
+            SmsSendResult result = smsClient.Send(
+                from: sms_sender_telephone_number,
+                to: model.Telephone,
+                message: message
             );
 
-            log.LogInformation("SendDeadlineNotice Complete");
+            if (result.Successful)
+            {
+                log.LogInformation("SendDeadlineNotice Complete");
+            }
+            else
+            {
+                log.LogInformation($"SendDeadlineNotice Failed, {result.ErrorMessage}");
+            }
         }
     }
 }
