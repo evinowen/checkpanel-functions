@@ -2,8 +2,9 @@ using System;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
+using Azure;
+using Azure.Communication;
+using Azure.Communication.Sms;
 
 namespace checkpanel_functions
 {
@@ -16,26 +17,33 @@ namespace checkpanel_functions
     public static class SendAuthenticationCode
     {
         [FunctionName("SendAuthenticationCode")]
-        public static void Run([ServiceBusTrigger("%SEND_AUTHENTICATION_CODE_QUEUE%")] SendAuthenticationCodeModel item, ILogger log)
+        public static void Run([ServiceBusTrigger("%SEND_AUTHENTICATION_CODE_QUEUE%")] SendAuthenticationCodeModel model, ILogger log)
         {
             log.LogInformation("SendAuthenticationCode Triggered");
 
-            var twilio_account_sid = Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID");
-            var twilio_auth_token = Environment.GetEnvironmentVariable("TWILIO_AUTH_TOKEN");
-            var twilio_sender = Environment.GetEnvironmentVariable("TWILIO_SENDER");
+            string sms_sender_telephone_number = Environment.GetEnvironmentVariable("SMS_SENDER_TELEPHONE_NUMBER");
+            string communication_services_connection_string = Environment.GetEnvironmentVariable("COMMUNICATION_SERVICES_CONNECTION_STRING");
 
-            log.LogInformation("SendAuthenticationCode Initialized Twilio Client");
-            TwilioClient.Init(twilio_account_sid, twilio_auth_token);
+            SmsClient smsClient = new SmsClient(communication_services_connection_string);
+            log.LogInformation("SendAuthenticationCode Initialized SMS Client");
 
-            log.LogInformation($"SendAuthenticationCode Send authentication code to ${item.Telephone}");
+            log.LogInformation($"SendAuthenticationCode Send authentication code from {sms_sender_telephone_number}");
+            log.LogInformation($"SendAuthenticationCode Send authentication code to {model.Telephone}");
 
-            MessageResource.Create(
-                body: $"checkpanel: {item.Authentication}",
-                from: new Twilio.Types.PhoneNumber(twilio_sender),
-                to: new Twilio.Types.PhoneNumber(item.Telephone)
+            SmsSendResult result = smsClient.Send(
+                from: sms_sender_telephone_number,
+                to: model.Telephone,
+                message: $"Here is your checkpanel authentication code: {model.Authentication}"
             );
 
-            log.LogInformation("SendAuthenticationCode Complete");
+            if (result.Successful)
+            {
+                log.LogInformation("SendAuthenticationCode Complete");
+            }
+            else
+            {
+                log.LogInformation($"SendAuthenticationCode Failed, {result.ErrorMessage}");
+            }
         }
     }
 }
